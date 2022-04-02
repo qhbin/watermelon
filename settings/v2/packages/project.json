@@ -1,0 +1,30 @@
+{
+  "general": {
+    "designResolution": {
+      "width": 720,
+      "height": 1280
+    }
+  },
+  "physics": {
+    "collisionGroups": [
+      {
+        "index": 1,
+        "name": "FRUIT"
+      },
+      {
+        "index": 2,
+        "name": "WALL"
+      },
+      {
+        "index": 3,
+        "name": "DOWNWALL"
+      }
+    ],
+    "collisionMatrix": {
+      "0": 1,
+      "1": 14,
+      "2": 2,
+      "3": 2
+    }
+  }
+}
