@@ -43,14 +43,16 @@ export class Fruit extends Component {
     ) {
         let _t = this;
         let fruitNode = MainGame.Instance.fruitNode;
+
         //是否碰撞到底部边界
-        if (other.node.getComponent(RigidBody2D).group === PhysicsGroup.DOWNFALL) {
+        if (other.node.getComponent(RigidBody2D).group === PhysicsGroup.DOWNWALL) {
             //碰撞后将其加入到fruitNode节点下
             self.node.parent = fruitNode;
 
             //是否第一次碰撞
             if (_t.downWallColl == 0) {
                 //播放碰撞音效
+                MainGame.Instance.playAudio(0, false, 1);
             }
 
             _t.downWallColl++;
@@ -76,9 +78,10 @@ export class Fruit extends Component {
                     return;
                 }
 
-                let pos = other.node.position;
+                let pos = other.node.getPosition();
 
                 //合并效果，音效，得分，生成一个新的水果
+                MainGame.Instance.playAudio(3, false, 1);
 
                 //得分
                 let score = MainGame.Instance.scoreObj.target + selfFruitNumber + 1;
@@ -99,13 +102,14 @@ export class Fruit extends Component {
                         position: pos, //合成到被碰撞的水果的位置
                     })
                     .call(() => {
+                        MainGame.Instance.playAudio(1, false, 1);
+
                         //创建爆浆效果，果汁飞溅的效果
                         MainGame.Instance.createFruitBoomEffect(
                             selfFruitNumber,
                             pos,
                             self.node.width
                         );
-              
 
                         //创建合成的水果
                         setTimeout(() => {

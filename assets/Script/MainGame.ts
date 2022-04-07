@@ -1,5 +1,5 @@
 
-import { _decorator, Component, Node, SpriteFrame, Label, Prefab, instantiate, Sprite, Vec3, Tween, EventTouch, UITransform, PhysicsSystem2D, EPhysics2DDrawFlags, Vec2, RigidBody2D, CircleCollider2D, ERigidBody2DType, director, Director, math, Color } from 'cc';
+import { _decorator, Component, Node, SpriteFrame, Label, Prefab, instantiate, Sprite, Vec3, Tween, EventTouch, UITransform, PhysicsSystem2D, EPhysics2DDrawFlags, Vec2, RigidBody2D, CircleCollider2D, ERigidBody2DType, director, Director, math, Color, AudioSource, AudioClip } from 'cc';
 import Tools from './Tools';
 const { ccclass, property } = _decorator;
 
@@ -56,6 +56,11 @@ export class MainGame extends Component {
   @property(Node)
   effectNode: Node = null;
 
+  @property([AudioClip])
+  audios: AudioClip[] = []
+
+  _audioSource: AudioSource = null!;
+
   //用来暂存生成的水果节点
   targetFruit: Node = null;
 
@@ -78,8 +83,7 @@ export class MainGame extends Component {
     MainGame.Instance = this;
 
     this.physicsSystemCtrl(true, false);
-    director.on(Director.EVENT_AFTER_PHYSICS, function () {
-    })
+    this._audioSource = this.node.getComponent(AudioSource)!;
   }
 
   update(dt) {
@@ -187,9 +191,9 @@ export class MainGame extends Component {
   // 绑定事件
   bindTouch() {
     this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this),
-      this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this),
-      this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this),
-      this.node.on(Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
+    this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this),
+    this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this),
+    this.node.on(Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
   }
 
   onTouchStart(e: EventTouch) {
@@ -274,26 +278,28 @@ export class MainGame extends Component {
 
       var duration = 0.5 * Math.random();
       c.setPosition(t);
-
+      c.setRotationFromEuler
       const rotation = _this.randomInteger(-360, 360);
 
-      let oldColor = c.getComponent(Sprite).color?.clone()
-
+      let oldColor = c.getComponent(Sprite).color?.clone();
+      const value = { a: 255 }
       new Tween(c)
         .by(duration, { position: new Vec3(Math.sin((a * Math.PI) / 180) * i, Math.cos((a * Math.PI) / 180) * i) })
         .to(duration + 0.5, { scale: new Vec3(0.3, 0.3) })
-        .by(duration + 0.5, { rotation: new math.Quat(rotation, rotation) })
+        .by(duration + 0.5, { rotation: math.Quat.fromAngleZ(new math.Quat(), rotation)})
+        .union()
         .call(() => {
-          let value = { a: 255 }
           new Tween(value)
-          .to(0.1, { a: 255 }, {
+          .to(0.1, { a: 0 }, {
             onUpdate: (t, ratio) => {
-              m.getComponent(Sprite).color = new Color(oldColor.r, oldColor.g, oldColor.b, t["a"])
+              c.getComponent(Sprite).color = new Color(oldColor.r, oldColor.g, oldColor.b, t["a"])
             }
           })
-          .call(() => m.active = !1)
+          .call(() => {
+            c.active = !1
+          })
+          .start()
         })
-        .union()
         .start();
     }
 
@@ -327,12 +333,13 @@ export class MainGame extends Component {
         .call(() => {
           let value = { a: 255 }
           new Tween(value)
-          .to(0.1, { a: 255 }, {
+          .to(0.1, { a: 0 }, {
             onUpdate: (t, ratio) => {
-              m.getComponent(Sprite).color = new Color(oldColor.r, oldColor.g, oldColor.b, t["a"])
+              h.getComponent(Sprite).color = new Color(oldColor.r, oldColor.g, oldColor.b, t["a"])
             }
           })
-          .call(() => m.active = !1)
+          .call(() => h.active = !1)
+          .start()
         })
         .start();
     }
@@ -344,7 +351,8 @@ export class MainGame extends Component {
     m.setPosition(t);
     m.setScale(new Vec3(0, 0));
     const angle = this.randomInteger(0, 360);
-    m.setRotation(new math.Quat(angle, angle));
+
+    m.setRotationFromEuler(new Vec3(0, 0, angle));
 
     let oldColor = m.getComponent(Sprite).color?.clone();
 
@@ -361,11 +369,17 @@ export class MainGame extends Component {
             }
           })
           .call(() => m.active = !1)
+          .start();
       })
       .start();
   }
 
   randomInteger(min, max) {
     return Math.ceil(Math.random() * (max - min));
+  }
+
+  playAudio(clipIndex:number, loop:boolean, volume:number) {
+    this._audioSource.loop = loop;
+    this._audioSource.playOneShot(this.audios[clipIndex], 1);
   }
 }
