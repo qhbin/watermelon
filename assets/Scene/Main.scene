@@ -448,6 +448,7 @@
     },
     "_enabled": true,
     "__prefab": null,
+    "isFullHeight": false,
     "_id": "cewb03CjpJqZEpkjhUlKHK"
   },
   {
@@ -752,7 +753,8 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "_id": "78alVeoQhElp8IfJB2OSOw"
+    "isFullHeight": true,
+    "_id": "6bROAnBelDUIXu3s8IBj0q"
   },
   {
     "__type__": "cc.Node",
@@ -890,7 +892,8 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "_id": "a2eSzBMs9FibzguO0J34iW"
+    "isFullHeight": true,
+    "_id": "d1TU+BDglNEpNSpgv2Yn9H"
   },
   {
     "__type__": "cc.UITransform",

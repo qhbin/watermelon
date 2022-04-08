@@ -202,14 +202,18 @@ export class MainGame extends Component {
     }
 
     let h = this.targetFruit.getComponent(UITransform).height;
+    let w = this.targetFruit.getComponent(UITransform).width;
+    const winWidth = Tools.getWinSize().width;
     this.targetFruit.getComponent(CircleCollider2D).radius = h / 2;
     this.targetFruit.getComponent(CircleCollider2D).apply();
     this.targetFruit.getComponent(RigidBody2D).type = ERigidBody2DType.Static;
     this.targetFruit.getComponent(RigidBody2D).linearVelocity = new Vec2(0, -800);
-
     //点击位置的x坐标值赋值给水果
     let x = this.node.getComponent(UITransform).convertToNodeSpaceAR(new Vec3(e.getLocation().x)).x,
       y = this.targetFruit.position.y;
+
+    const mX = (winWidth - w) / 2;
+    x = x > 0 ? Math.min(mX, x) : Math.max(-mX, x);
 
     new Tween(this.targetFruit)
       .to(0.1, {

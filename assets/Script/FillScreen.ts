@@ -1,7 +1,7 @@
 
 import { _decorator, Component, UITransform, screen } from 'cc';
 import Tools from './Tools'
-const { ccclass } = _decorator;
+const { ccclass, property } = _decorator;
 
 /**
  * Predefined variables
@@ -18,10 +18,17 @@ const { ccclass } = _decorator;
 @ccclass('FillScreen')
 export class FillScreen extends Component {
 
+    @property
+    isFullHeight:boolean = false;
+
     onLoad() {
         const winSize = Tools.getWinSize();
         const node = this.getComponent(UITransform);
-        node.setContentSize(winSize.width, winSize.height);
+        if (this.isFullHeight) {
+            node.setContentSize(node.width, winSize.height);
+        } else {
+            node.setContentSize(winSize.width, winSize.height);
+        }
     }
 
     start () {
