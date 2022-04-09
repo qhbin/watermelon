@@ -24,11 +24,11 @@
     "_active": true,
     "_components": [],
     "_prefab": {
-      "__id__": 49
+      "__id__": 50
     },
     "autoReleaseAssets": false,
     "_globals": {
-      "__id__": 50
+      "__id__": 51
     },
     "_id": "82c3cbf8-a76f-4d5d-8705-dafcf649ccc3"
   },
@@ -140,14 +140,11 @@
         "__id__": 35
       },
       {
-        "__id__": 41
+        "__id__": 42
       }
     ],
     "_active": true,
     "_components": [
-      {
-        "__id__": 44
-      },
       {
         "__id__": 45
       },
@@ -159,6 +156,9 @@
       },
       {
         "__id__": 48
+      },
+      {
+        "__id__": 49
       }
     ],
     "_prefab": null,
@@ -1136,10 +1136,10 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 39
+        "__id__": 40
       },
       {
-        "__id__": 40
+        "__id__": 41
       }
     ],
     "_prefab": null,
@@ -1186,6 +1186,9 @@
       },
       {
         "__id__": 38
+      },
+      {
+        "__id__": 39
       }
     ],
     "_prefab": null,
@@ -1278,6 +1281,18 @@
     "_id": "31NKr71DhE/78tokTFQpKL"
   },
   {
+    "__type__": "cc.UIOpacity",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 36
+    },
+    "_enabled": true,
+    "__prefab": null,
+    "_opacity": 255,
+    "_id": "21L6IJB0NHdqt3M0Hwobaq"
+  },
+  {
     "__type__": "cc.UITransform",
     "_name": "",
     "_objFlags": 0,
@@ -1322,10 +1337,10 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 42
+        "__id__": 43
       },
       {
-        "__id__": 43
+        "__id__": 44
       }
     ],
     "_prefab": null,
@@ -1362,7 +1377,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 41
+      "__id__": 42
     },
     "_enabled": true,
     "__prefab": null,
@@ -1383,7 +1398,7 @@
     "_name": "",
     "_objFlags": 0,
     "node": {
-      "__id__": 41
+      "__id__": 42
     },
     "_enabled": true,
     "__prefab": null,
@@ -1651,7 +1666,7 @@
       "__expectedType__": "cc.Prefab"
     },
     "effectNode": {
-      "__id__": 41
+      "__id__": 42
     },
     "audios": [
       {
@@ -1706,19 +1721,19 @@
   {
     "__type__": "cc.SceneGlobals",
     "ambient": {
-      "__id__": 51
-    },
-    "shadows": {
       "__id__": 52
     },
-    "_skybox": {
+    "shadows": {
       "__id__": 53
     },
-    "fog": {
+    "_skybox": {
       "__id__": 54
     },
-    "octree": {
+    "fog": {
       "__id__": 55
+    },
+    "octree": {
+      "__id__": 56
     }
   },
   {
