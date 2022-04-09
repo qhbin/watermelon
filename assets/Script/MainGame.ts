@@ -1,6 +1,7 @@
 
-import { _decorator, Component, Node, SpriteFrame, Label, Prefab, instantiate, Sprite, Vec3, Tween, EventTouch, UITransform, PhysicsSystem2D, EPhysics2DDrawFlags, Vec2, RigidBody2D, CircleCollider2D, ERigidBody2DType, director, Director, math, Color, AudioSource, AudioClip } from 'cc';
+import { _decorator, Component, Node, SpriteFrame, Label, Prefab, instantiate, Sprite, Vec3, Tween, EventTouch, UITransform, PhysicsSystem2D, EPhysics2DDrawFlags, Vec2, RigidBody2D, CircleCollider2D, ERigidBody2DType, director, Director, math, Color, AudioSource, AudioClip, UIOpacity } from 'cc';
 import Tools from './Tools';
+import { Fruit } from './Fruit';
 const { ccclass, property } = _decorator;
 
 /**
@@ -57,7 +58,7 @@ export class MainGame extends Component {
   effectNode: Node = null;
 
   @property([AudioClip])
-  audios: AudioClip[] = []
+  audios: AudioClip[] = [];
 
   _audioSource: AudioSource = null!;
 
@@ -78,6 +79,17 @@ export class MainGame extends Component {
   //设置一个静态单例引用，方便其他类中调用该类方法
   static Instance: MainGame = null;
 
+  //全部水果最高高度
+  theFruitHeight: number = -1200;
+
+  @property(Node)
+  dashLineNode: Node = null;
+
+  isDashLineInit: boolean = false;
+
+  //标记游戏结束
+  gameOverSign: number = 0;
+
   onLoad() {
     null != MainGame.Instance && MainGame.Instance.destroy();
     MainGame.Instance = this;
@@ -88,9 +100,12 @@ export class MainGame extends Component {
 
   update(dt) {
     this.updateScoreLabel(dt);
+    this.checkTheRedDashLine(dt);
   }
 
   start() {
+    //初始化红色虚线
+    this.initDashLine();
     this.createOneFruit(0);
     this.bindTouch();
   }
@@ -133,7 +148,7 @@ export class MainGame extends Component {
 
     fruit.getComponent(RigidBody2D).type = ERigidBody2DType.Dynamic;
     fruit.getComponent(RigidBody2D).linearVelocity = new Vec2(0, -100);
-    fruit.getComponent(CircleCollider2D).radius = fruit.height / 2;
+    fruit.getComponent(CircleCollider2D).radius = fruit.getComponent(UITransform).height / 2;
     fruit.getComponent(CircleCollider2D).apply();
 
     new Tween(fruit)
@@ -160,7 +175,6 @@ export class MainGame extends Component {
     PhysicsSystem2D.instance.enable = enablePhysics;
   }
 
-
   // 创建一个水果
   createOneFruit(index: number) {
     const _this = this;
@@ -186,14 +200,15 @@ export class MainGame extends Component {
         _this.targetFruit = fruit;
       })
       .start();
+    _this.findHighestFruit();
   }
 
   // 绑定事件
   bindTouch() {
     this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this),
-    this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this),
-    this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this),
-    this.node.on(Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
+      this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this),
+      this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this),
+      this.node.on(Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
   }
 
   onTouchStart(e: EventTouch) {
@@ -226,7 +241,6 @@ export class MainGame extends Component {
       return;
     }
     const x = this.node.getComponent(UITransform).convertToNodeSpaceAR(new Vec3(e.getLocation().x)).x;
-    console.log(456, x);
     this.targetFruit.setPosition(new Vec3(x));
   }
   onTouchEnd(e: EventTouch) {
@@ -267,6 +281,11 @@ export class MainGame extends Component {
 
   createFruitBoomEffect(fruitNumber: number, t: Vec3, width: number) {
     let _this = this;
+
+    //播放音效
+    _this.playAudio(4, false, 0.3);
+    _this.playAudio(1, false, 0.5);
+
     let n = 10;
     while (n > 0) {
       n--;
@@ -285,24 +304,16 @@ export class MainGame extends Component {
       c.setRotationFromEuler
       const rotation = _this.randomInteger(-360, 360);
 
-      let oldColor = c.getComponent(Sprite).color?.clone();
-      const value = { a: 255 }
       new Tween(c)
         .by(duration, { position: new Vec3(Math.sin((a * Math.PI) / 180) * i, Math.cos((a * Math.PI) / 180) * i) })
         .to(duration + 0.5, { scale: new Vec3(0.3, 0.3) })
-        .by(duration + 0.5, { rotation: math.Quat.fromAngleZ(new math.Quat(), rotation)})
+        .by(duration + 0.5, { rotation: math.Quat.fromAngleZ(new math.Quat(), rotation) })
         .union()
         .call(() => {
-          new Tween(value)
-          .to(0.1, { a: 0 }, {
-            onUpdate: (t, ratio) => {
-              c.getComponent(Sprite).color = new Color(oldColor.r, oldColor.g, oldColor.b, t["a"])
-            }
-          })
-          .call(() => {
-            c.active = !1
-          })
-          .start()
+          new Tween(c.getComponent(UIOpacity))
+            .to(0.1, { opacity: 0 })
+            .call(() => c.active = !1)
+            .start()
         })
         .start();
     }
@@ -324,8 +335,6 @@ export class MainGame extends Component {
         Math.cos((angle * Math.PI) / 180) * i
       )
 
-      let oldColor = h.getComponent(Sprite).color?.clone();
-
       new Tween(h)
         .by(duration, {
           position
@@ -335,15 +344,10 @@ export class MainGame extends Component {
         })
         .union()
         .call(() => {
-          let value = { a: 255 }
-          new Tween(value)
-          .to(0.1, { a: 0 }, {
-            onUpdate: (t, ratio) => {
-              h.getComponent(Sprite).color = new Color(oldColor.r, oldColor.g, oldColor.b, t["a"])
-            }
-          })
-          .call(() => h.active = !1)
-          .start()
+          new Tween(h.getComponent(UIOpacity))
+            .to(0.1, { opacity: 0 })
+            .call(() => h.active = !1)
+            .start()
         })
         .start();
     }
@@ -358,32 +362,157 @@ export class MainGame extends Component {
 
     m.setRotationFromEuler(new Vec3(0, 0, angle));
 
-    let oldColor = m.getComponent(Sprite).color?.clone();
-
     new Tween(m)
       .to(.2, {
         scale: new Vec3(width / 150, width / 150)
       })
       .call(() => {
-        let value = { a: 0 };
-        new Tween(value)
-          .to(0.1, { a: 255 }, {
-            onUpdate: (t, ratio) => {
-              m.getComponent(Sprite).color = new Color(oldColor.r, oldColor.g, oldColor.b, t["a"])
-            }
-          })
+        m.getComponent(UIOpacity).opacity = 0;
+        new Tween(m.getComponent(UIOpacity))
+          .to(0.1, { opacity: 255 })
           .call(() => m.active = !1)
-          .start();
+          .start()
       })
       .start();
   }
 
   randomInteger(min, max) {
-    return Math.ceil(Math.random() * (max - min));
+    const span = Math.ceil(Math.random() * (max - min));
+    return min < 0 ? span + min : span;
   }
 
-  playAudio(clipIndex:number, loop:boolean, volume:number) {
+  playAudio(clipIndex: number, loop: boolean, volume: number) {
     this._audioSource.loop = loop;
     this._audioSource.playOneShot(this.audios[clipIndex], 1);
+  }
+
+  /**
+ * 查找最高的水果，在碰撞和生成后调用检测
+ */
+  findHighestFruit() {
+    let height = this.theFruitHeight;
+    for(let i = 0; i < this.fruitNode.children.length; i++) {
+      const currentHeight = this.fruitNode.children[i].getPosition().y + this.fruitNode.children[i].getComponent(UITransform).width / 2;
+      height = Math.max(currentHeight, height)
+    }
+    this.theFruitHeight = height;
+  }
+
+  //检测是否快到红线了
+  checkTheRedDashLine(dt) {
+    if (!this.isDashLineInit) {
+      return;
+    }
+    const y = this.dashLineNode.getPosition().y;
+    y - this.theFruitHeight < 100 &&
+      y - this.theFruitHeight >= 0 &&
+      (this.dashLineNode.active = true);
+
+    y - this.theFruitHeight > 100 &&
+      (this.dashLineNode.active = false);
+  }
+
+  /**
+ * 初始化红线，并加入闪烁效果
+ */
+  initDashLine() {
+    let _this = this;
+    new Tween(this.dashLineNode.getComponent(UIOpacity))
+      .to(0.3, {
+        opacity: 255,
+      })
+      .to(0.3, {
+        opacity: 0,
+      })
+      .union()
+      .repeatForever()
+      .start();
+    this.scheduleOnce(function () {
+      _this.dashLineNode.active = false;
+      _this.isDashLineInit = true;
+    }, 1);
+  }
+
+  /**
+   * 游戏结束
+   */
+  gameOver() {
+    var _this = this;
+    if (_this.gameOverSign == 0) {
+      let t = 0;
+      const boomFn = function (n) {
+        setTimeout(function () {
+          _this.createFruitBoomEffect(
+            _this.fruitNode.children[n].getComponent(Fruit).fruitNumber,
+            _this.fruitNode.children[n].position,
+            _this.fruitNode.children[n].getComponent(UITransform).width
+          );
+
+          let score =
+            _this.scoreObj.target +
+            _this.fruitNode.children[n].getComponent(Fruit).fruitNumber +
+            1;
+          _this.setScoreTween(score);
+          _this.fruitNode.children[n].active = false;
+        }, 100 * ++t);
+      }
+
+      //游戏结束，水果自爆
+      for (let i = this.fruitNode.children.length - 1; i >= 0; i--) {
+        boomFn(i);
+      }
+      _this.dashLineNode.active = true;
+
+      for (var i = 1; i < _this.topNode.children.length; i++) {
+        _this.topNode.children[i].active = !1;
+      }
+
+      this.scheduleOnce(function () {
+        _this.showGameOverPanel();
+      }, 3);
+
+      _this.gameOverSign++;
+    }
+  }
+
+  //游戏结束界面
+  @property(Prefab)
+  gameOverPre: Prefab = null;
+  showGameOverPanel() {
+    let _this = this;
+    let gameOverPanelNode = instantiate(this.gameOverPre);
+    gameOverPanelNode.parent = _this.node;
+
+    gameOverPanelNode
+      .getChildByName("startBtn")
+      .on(Node.EventType.TOUCH_START, function (e: Event) {
+        _this.restartGame();
+      });
+    let btnNode = gameOverPanelNode.getChildByName("startBtn");
+
+    new Tween(btnNode)
+      .to(1, {
+        scale: new Vec3(0.8, 0.8),
+      })
+      .to(1, {
+        scale: new Vec3(0.9, 0.9),
+      })
+      .union()
+      .repeatForever()
+      .start();
+
+    gameOverPanelNode.children[0].on(
+      Node.EventType.TOUCH_START,
+      function (e: Event) {
+        _this.restartGame();
+      }
+    );
+  }
+
+  restartGame() {
+    director
+    director.preloadScene("Main", function () {
+      director.loadScene("Main");
+    });
   }
 }

@@ -1675,6 +1675,13 @@
         "__expectedType__": "cc.AudioClip"
       }
     ],
+    "dashLineNode": {
+      "__id__": 36
+    },
+    "gameOverPre": {
+      "__uuid__": "6239e6b0-4d03-4b2a-94c1-6011df040c63",
+      "__expectedType__": "cc.Prefab"
+    },
     "_id": "07MqTQ6wlAMaVGF4uFIDEV"
   },
   {
