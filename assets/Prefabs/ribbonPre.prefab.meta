@@ -2,12 +2,12 @@
   "ver": "1.1.35",
   "importer": "prefab",
   "imported": true,
-  "uuid": "3e5fdad2-0e99-435f-8f02-7cc8f62c1db1",
+  "uuid": "3d399fc4-c708-40fd-a34a-b4d3a009768c",
   "files": [
     ".json"
   ],
   "subMetas": {},
   "userData": {
-    "syncNodeName": "juicePre"
+    "syncNodeName": "ribbonPre"
   }
 }

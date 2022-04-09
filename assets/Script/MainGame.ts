@@ -1,5 +1,5 @@
 
-import { _decorator, Component, Node, SpriteFrame, Label, Prefab, instantiate, Sprite, Vec3, Tween, EventTouch, UITransform, PhysicsSystem2D, EPhysics2DDrawFlags, Vec2, RigidBody2D, CircleCollider2D, ERigidBody2DType, director, Director, math, Color, AudioSource, AudioClip, UIOpacity } from 'cc';
+import { _decorator, Component, Node, SpriteFrame, Label, Prefab, instantiate, Sprite, Vec3, Tween, EventTouch, UITransform, PhysicsSystem2D, EPhysics2DDrawFlags, Vec2, RigidBody2D, CircleCollider2D, ERigidBody2DType, director, AudioSource, AudioClip, UIOpacity, Layers } from 'cc';
 import Tools from './Tools';
 import { Fruit } from './Fruit';
 const { ccclass, property } = _decorator;
@@ -89,6 +89,22 @@ export class MainGame extends Component {
 
   //标记游戏结束
   gameOverSign: number = 0;
+
+  //遮罩背景图节点
+  @property(Prefab)
+  maskBg: Prefab = null;
+
+  //彩带精灵图
+  @property([SpriteFrame])
+  ribbonSprites: Array<SpriteFrame> = [];
+
+  //彩带预制节点
+  @property(Prefab)
+  ribbonPre: Prefab = null;
+
+  //合成大西瓜效果挂载节点
+  @property(Node)
+  daxiguaEffectNode: Node = null;
 
   onLoad() {
     null != MainGame.Instance && MainGame.Instance.destroy();
@@ -203,6 +219,112 @@ export class MainGame extends Component {
     _this.findHighestFruit();
   }
 
+  getRandomNum(e, t, n) {
+    return (
+      void 0 === n && (n = !1),
+      n
+        ? Math.floor(Math.random() * (t - e + 1) + e)
+        : Math.random() * (t - e) + e
+    );
+  }
+
+  createRibbonEffect(pos: Vec3, parentNode: Node) {
+    let _this = this;
+    _this.playAudio(1, false, 1);
+    for (var t = this.getRandomNum(80, 100, 0), n = 0; n < t; n++) {
+      var o = instantiate(_this.ribbonPre);
+      o.parent = parentNode;
+      o.getComponent(Sprite).spriteFrame =
+        _this.ribbonSprites[this.getRandomNum(0, 5, true)];
+      o.position = pos;
+
+      const initScale = this.getRandomNum(0.7, 1, 0);
+      o.setScale(initScale, initScale);
+
+      let c = (360 * Math.random() * Math.PI) / 180,
+        a = 360 * Math.random(),
+        i = new Vec3(o.getPosition().x + Math.sin(c) * a, o.getPosition().y + Math.cos(c) * a + 150);
+
+      const scale = 1 * Math.random() + 0.5;
+      const winSize = Tools.getWinSize();
+      new Tween(o)
+        .parallel(
+          new Tween().to(0.255, { position: i }, { easing: 'cubicOut' }),
+          new Tween().to(0.255, { scale: new Vec3(scale, scale) }),
+        )
+        .by(2, { position: new Vec3(0, 0.8 * -winSize.height - Math.random() * winSize.height), angle: (1800 * Math.random() + 1200) * (Math.random() > 0.5 ? 1 : -1) })
+        .removeSelf()
+        .call(() => {
+          o.active = false;
+        })
+        .start()
+    }
+  }
+
+  createBigWaterMelonEffect() {
+    this.daxiguaEffectNode.removeAllChildren();
+    let _this = this;
+    //大西瓜显示特效
+    var mask = instantiate(_this.maskBg);
+    mask.parent = _this.daxiguaEffectNode;
+    mask.active = true;
+
+    mask.getComponent(UIOpacity).opacity = 0;
+
+    new Tween(mask.getComponent(UIOpacity))
+      .to(0.5, {
+        opacity: 150,
+      })
+      .start();
+
+    var watermelon = new Node('watermelon');
+    watermelon.parent = _this.daxiguaEffectNode;
+    watermelon.layer = Layers.Enum.UI_2D;
+    watermelon.addComponent(Sprite).spriteFrame = _this.fruitSprites[10];
+    watermelon.setPosition(new Vec3(0, 0, 0));
+    watermelon.setScale(new Vec3(0, 0, 0));
+
+    // 旋转的光圈背景图
+    var bg = new Node();
+    bg.layer = Layers.Enum.UI_2D;
+    bg.addComponent(Sprite).spriteFrame = _this.ribbonSprites[8];
+    bg.setScale(new Vec3(3, 3));
+    bg.parent = watermelon;
+    bg.setPosition(new Vec3(0, 0, 0));
+
+    new Tween(bg)
+      .by(5, {
+        angle: 360,
+      })
+      .repeatForever()
+      .start();
+
+    var s = new Node();
+    s.layer = Layers.Enum.UI_2D;
+    s.addComponent(Sprite).spriteFrame = _this.fruitSprites[10];
+    s.parent = watermelon;
+    s.setPosition(new Vec3(0, 0));
+
+    //播放音效
+    _this.playAudio(2, false, 1),
+
+    //抛撒彩带效果
+    _this.createRibbonEffect(new Vec3(0, 300, 0), this.daxiguaEffectNode);
+
+    new Tween(watermelon)
+      .parallel(new Tween().to(1, { scale: new Vec3(1, 1) }), new Tween().by(1, { position: new Vec3(0, 0) }))
+      .delay(1)
+      .to(1, {
+        position: new Vec3(0, 800),
+        scale: new Vec3(0.3, 0.3)
+      })
+      .call(() => {
+        mask.destroy(),
+          watermelon.destroy();
+      })
+      .start()
+  }
+
   // 绑定事件
   bindTouch() {
     this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this),
@@ -305,10 +427,11 @@ export class MainGame extends Component {
       const rotation = _this.randomInteger(-360, 360);
 
       new Tween(c)
-        .by(duration, { position: new Vec3(Math.sin((a * Math.PI) / 180) * i, Math.cos((a * Math.PI) / 180) * i) })
-        .to(duration + 0.5, { scale: new Vec3(0.3, 0.3) })
-        .by(duration + 0.5, { rotation: math.Quat.fromAngleZ(new math.Quat(), rotation) })
-        .union()
+        .parallel(
+          new Tween().by(duration, { position: new Vec3(Math.sin((a * Math.PI) / 180) * i, Math.cos((a * Math.PI) / 180) * i) }),
+          new Tween().to(duration + 0.5, { scale: new Vec3(0.3, 0.3) }),
+          new Tween(c).by(duration + 0.5, { angle: rotation })
+        )
         .call(() => {
           new Tween(c.getComponent(UIOpacity))
             .to(0.1, { opacity: 0 })
@@ -336,13 +459,14 @@ export class MainGame extends Component {
       )
 
       new Tween(h)
-        .by(duration, {
-          position
-        })
-        .to(duration + 0.5, {
-          scale: new Vec3(.3, .3)
-        })
-        .union()
+        .parallel(
+          new Tween().by(duration, {
+            position
+          }),
+          new Tween().to(duration + 0.5, {
+            scale: new Vec3(.3, .3)
+          })
+        )
         .call(() => {
           new Tween(h.getComponent(UIOpacity))
             .to(0.1, { opacity: 0 })
@@ -391,7 +515,7 @@ export class MainGame extends Component {
  */
   findHighestFruit() {
     let height = this.theFruitHeight;
-    for(let i = 0; i < this.fruitNode.children.length; i++) {
+    for (let i = 0; i < this.fruitNode.children.length; i++) {
       const currentHeight = this.fruitNode.children[i].getPosition().y + this.fruitNode.children[i].getComponent(UITransform).width / 2;
       height = Math.max(currentHeight, height)
     }
@@ -510,7 +634,6 @@ export class MainGame extends Component {
   }
 
   restartGame() {
-    director
     director.preloadScene("Main", function () {
       director.loadScene("Main");
     });
